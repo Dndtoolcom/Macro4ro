@@ -1,0 +1,245 @@
+begin
+     Window.Set location("Ragnarok", "yes", "0", "0")
+     // Settings
+     // Change to 0 if you have no awakes or potion
+     Variable.Set("IsAwakeAvailable", "1")
+     Variable.Set("IsPotionAvailable", "1")
+     // Potion to use when HP is 2/3
+     Variable.Set("HowManyPotionToUse", "5")
+     Variable.Set("HowManyAttackAttempt", "5")
+     // Coordinates
+     Variable.Set("ShortCutBarY", "42")
+     Variable.Set("FlyWingX", "270")
+     Variable.Set("PotionX", "242")
+     Variable.Set("Potion2X", "328")
+     Variable.Set("Potion3X", "357")
+     Variable.Set("AwakeningX", "299")
+     // Start a timer
+     Macro.Start stopwatch("checkTime")
+     Macro.Start stopwatch("checkLootTime")
+     // Declare Variables
+     Variable.Set("IsNotValidMonster", "0")
+     Variable.Add (Math)("IsNotValidMonster", "1")
+     // Check Initialize every 31 minutes
+     Variable.Set("MinutesToCheck", "1860000")
+     Variable.Set("MinutesToLoot", "10000")
+     // Start Up
+     Function.Execute("Initialize")
+     begin loop()
+          Macro.Read stopwatch("checkTime", "waitTime")
+          if  Variable.Is greater than (Math)("waitTime", "{MinutesToCheck}")
+               begin
+                    Function.Execute("Initialize")
+               end
+          Function.Execute("Attack")
+          Function.Execute("Loot4")
+          Function.Execute("Fly")
+          Function.Execute("IfNeedToPotion")
+        
+     end
+ end
+
+function("Initialize")
+     begin
+          if  Variable.Is equal to("IsAwakeAvailable","1")
+               begin
+                    Function.Execute("Awakening")
+               end
+          Macro.Restart stopwatch("checkTime")
+          Macro.Pause("500")
+     end
+function
+
+function("Attack")
+     begin
+          // Teleport if Monster to avoid is found
+          Function.Execute("EmergencyFlyWing")
+          // Click Monster if Located
+          if  Color.Can be located on screen (RGB)("255", "255", "0", "0")
+               begin
+                    Mouse.Click at color closest to coordinate (RGB)("255", "255", "0", "0", "640", "375", "left")
+                    // 997 43
+                    Mouse.Move to coordinate("270", "40")
+                    // Teleport if clicking on the monster a number of times but still the name isn't shown
+                    if  Color.Pixel pattern can not be located on screen("255,198,198,0,-1,255,198,198,0,2,255,198,198", "4")
+                         begin
+                              Variable.Add (Math)("IsNotValidMonster", "1")
+                              Macro.Pause("500")
+                              if  Variable.Is greater than (Math)("IsNotValidMonster", "{HowManyAttackAttempt}")
+                                   begin
+                                        Variable.Set("IsNotValidMonster", "1")
+                                        Function.Execute("FlyWithoutCondition")
+                                   end
+                         end
+                    // If the monster isn't dead within the set number of seconds it will teleport
+                    if  Color.Pixel pattern can be located on screen("255,198,198,0,-1,255,198,198,0,2,255,198,198", "4")
+                         begin loop()
+                              Macro.Get parent loop iteration("count")
+                              Variable.Set("x", "{count}")
+                              if  Variable.Is equal to("x","30")
+                                   begin
+                                        Function.Execute("FlyWithoutCondition")
+                                   end
+                              Macro.Pause("300")
+                              Function.Execute("IfNeedToPotion")
+                              // Teleport if Monster to avoid is found
+                              Function.Execute("EmergencyFlyWing")
+                              // Mouse.Move to coordinate("270", "40")
+                              if  Color.Pixel pattern can not be located on screen("255,198,198,0,-1,255,198,198,0,2,255,198,198", "4")
+                                   begin
+                                        if  Variable.Is greater than (Math)("IsNotValidMonster", "{HowManyAttackAttempt}")
+                                             begin
+                                                  Variable.Set("IsNotValidMonster", "1")
+                                                  Function.Execute("FlyWithoutCondition")
+                                             end
+                                        Variable.Set("IsNotValidMonster", "1")
+                                        Macro.Pause("300")
+                                        Function.Execute("Loot4")
+                                        Macro.Break from loop("yes")
+                                   end
+                         end
+               end
+     end
+function
+
+function("Loot4")
+     begin
+          // 463, 249, 376, 287
+          Color.Limit area of interest to coordinates("263", "149", "676", "487")
+          if  Color.Can be located on screen (RGB)("0", "0", "255", "0")
+               begin loop()
+                    Mouse.Click at color closest to coordinate (RGB)("0", "0", "255", "0", "640", "375", "left")
+                    Humanly.Pause("400", "500")
+                    if  Color.Can not be located on screen (RGB)("0", "0", "255", "0")
+                         begin
+                              if  Color.Can not be located on screen (RGB)("0", "0", "255", "0")
+                                   begin
+                                        Color.Unlimit area of interest()
+                                        Macro.Break from loop("yes")
+                                   end
+                         end
+                    if  Color.Pixel pattern can be located on screen("255,239,148,0,-1,255,239,148,0,2,255,239,148", "4")
+                         begin
+                              Macro.Read stopwatch("checkLootTime", "waitLootTime")
+                              if  Variable.Is greater than (Math)("waitLootTime", "{MinutesToLoot}")
+                                   begin
+                                        // Function.Execute("FlyWithoutCondition")
+                                        // Window.Display message box("Loot timer up", "yes")
+                                        Macro.Restart stopwatch("checkLootTime")
+                                   end
+                         end
+                    if  Color.Pixel pattern can not be located on screen("255,239,148,0,-1,255,239,148,0,2,255,239,148", "4")
+                         begin
+                              Macro.Restart stopwatch("checkLootTime")
+                         end
+               end
+          Color.Unlimit area of interest()
+     end
+function
+
+
+
+function("Fly")
+     begin
+          // Teleport if Monster to avoid is found
+          Function.Execute("EmergencyFlyWing")
+          if  Color.Can not be located on screen (RGB)("255", "255", "0", "0")
+               begin
+                    if  Color.Can not be located on screen (RGB)("255", "255", "0", "0")
+                         begin
+                              Function.Execute("FlyWithoutCondition")
+                         end
+               end
+     end
+function
+
+function("EmergencyFlyWing")
+     begin
+          if  Color.Can be located on screen (RGB)("255", "181", "82", "0")
+               begin
+                    Function.Execute("FlyWithoutCondition")
+               end
+     end
+function
+
+function("FlyWithoutCondition")
+     begin
+          Mouse.Double click at coordinate("{FlyWingX}","{ShortCutBarY}","left")
+          Macro.Pause("1000")
+     end
+function
+
+function("Awakening")
+     begin
+          if  Color.Pixel pattern can not be located on screen("203,254,51,-2,-2,203,254,51,1,1,203,254,51,-1,2,203,254,51,1,-1,203,254,51,1,-1,203,254,51,1,-1,203,254,51,0,3,203,254,51,2,0,203,254,51,4,1,203,254,51,-4,0,203,254,51,3,0,203,254,51,-2,0,203,254,51,1,0,203,254,51,-1,-2,203,254,51,1,-1,203,254,51,1,-1,203,254,51,1,-1,203,254,51,0,-1,203,254,51,-1,-1,203,254,51,-1,0,203,254,51,-1,0,203,254,51,-1,1,203,254,51", "10")
+               Begin
+                    Mouse.Double click at coordinate("{AwakeningX}", "{ShortCutBarY}", "left")
+                    Macro.Pause("300")
+               End
+     end
+function
+
+function("IfNeedToPotion")
+     Begin
+          // If HP Bar become 2/3
+          if  Variable.Is equal to("IsPotionAvailable","1")
+               begin
+                    // if  Color.Pixel pattern can not be located on screen("16,239,33,-6,0,16,239,33,3,0,16,239,33,6,0,16,239,33,3,0,16,239,33,3,0,16,239,33,3,0,16,239,33,3,0,16,239,33,3,0,16,239,33,3,0,16,239,33,3,0,16,239,33,3,0,16,239,33,3,0,16,239,33", "0")
+                    if  Color.Can be located on screen (RGB)("239", "16", "16", "0")
+                         begin
+                              if  Color.Can not be located on screen (RGB)("16", "239", "33", "0")
+                                   begin
+                                        Function.Execute("Potion")
+                                        if  Color.Can be located on screen (RGB)("239", "16", "16", "0")
+                                             begin
+                                                  if  Color.Can not be located on screen (RGB)("16", "239", "33", "0")
+                                                       begin
+                                                            Function.Execute("Potion2")
+                                                            if  Color.Can be located on screen (RGB)("239", "16", "16", "0")
+                                                                 begin
+                                                                      if  Color.Can not be located on screen (RGB)("16", "239", "33", "0")
+                                                                           begin
+                                                                                Function.Execute("Potion3")
+                                                                                if  Color.Can be located on screen (RGB)("239", "16", "16", "0")
+                                                                                     begin
+                                                                                          if  Color.Can not be located on screen (RGB)("16", "239", "33", "0")
+                                                                                               begin
+                                                                                                    Variable.Set("IsPotionAvailable", "0")
+                                                                                               end
+                                                                                     end
+                                                                           end
+                                                                 end
+                                                       end
+                                             end
+                                   end
+                         end
+               end
+     End
+function
+
+function("Potion")
+     begin loop("{HowManyPotionToUse}")
+          // Teleport if Monster to avoid is found
+          Function.Execute("EmergencyFlyWing")
+          Mouse.Double click at coordinate("{PotionX}", "{ShortCutBarY}", "left")
+          Macro.Pause("300")
+     end
+function
+
+function("Potion2")
+     begin loop("{HowManyPotionToUse}")
+          // Teleport if Monster to avoid is found
+          Function.Execute("EmergencyFlyWing")
+          Mouse.Double click at coordinate("{Potion2X}", "{ShortCutBarY}", "left")
+          Macro.Pause("300")
+     end
+function
+
+function("Potion3")
+     begin loop("{HowManyPotionToUse}")
+          // Teleport if Monster to avoid is found
+          Function.Execute("EmergencyFlyWing")
+          Mouse.Double click at coordinate("{Potion3X}", "{ShortCutBarY}", "left")
+          Macro.Pause("300")
+     end
+function
